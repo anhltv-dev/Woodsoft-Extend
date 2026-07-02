@@ -61,6 +61,7 @@ hiddenimports += [
     'keyring.backends.Windows',
     'mode1',
     'mode1.gui_mode1',
+    'mode1.run_webview',
     'tkinter',
     'tkinter.ttk',
     'tkinter.font',

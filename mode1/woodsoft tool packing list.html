@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Woodsoft — Công cụ hỗ trợ Bao Gói & Đóng Kiện</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="xlsx.full.min.js"></script>
+<script src="html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -540,7 +540,7 @@ let TEMP_KIENS=[];
 function printAllKiens(){
 if(!FILES.length){alert('Chưa có file nào');return;}
 TEMP_KIENS=[];
-for(const f of FILES)for(const k of f.kiens)TEMP_KIENS.push(k);
+for(const f of FILES)for(const k of f.kiens)TEMP_KIENS.push({...k, fileName: f.fileName});
 if(!TEMP_KIENS.length){alert('Chưa có kiện nào');return;}
 showPrintSettings(TEMP_KIENS,false);
 }
@@ -587,7 +587,7 @@ ${!isSingle?`
 
 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;border-top:1px solid #eee;padding-top:12px">
 <button onclick="this.closest('[style*=position]').remove()" style="padding:8px 16px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#f5f5f5">Hủy</button>
-<button id="btnPrintNow" style="padding:8px 16px;background:#1A5276;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold">In PDF</button>
+<button id="btnPrintNow" style="padding:8px 16px;background:#28B463;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold">In ra Máy in / PDF</button>
 </div>
 </div>
 `;
@@ -603,7 +603,7 @@ const size=isSingle?'A4':document.querySelector('input[name=paperSize]:checked')
 const settings={materialMode:matMode,rowsPerPage:rows,paperSize:size};
 localStorage.setItem('printSettings',JSON.stringify(settings));
 
-generateAdvancedPrintPDF(kiens,matMode,rows,size);
+generateAdvancedPrintSystem(kiens,matMode,rows,size);
 dialog.remove();
 };
 }
@@ -699,10 +699,13 @@ doc.close();
 setTimeout(()=>{w.focus();w.print();},300);
 }
 
-function generateAdvancedPrintPDF(kiens,materialMode='full',rowsPerPage=10,paperSize='A4'){
-const advPrintWin=window.open('','','width=0,height=0');
-if(!advPrintWin){alert('Hãy cho phép pop-up để in');return;}
-const advPrintDoc=advPrintWin.document;
+function generateAdvancedPrintSystem(kiens,materialMode='full',rowsPerPage=10,paperSize='A4'){
+const fileKienTotals = {};
+const fileKienIndices = {};
+kiens.forEach(k => {
+    const fnKey = k.fileName || 'default';
+    fileKienTotals[fnKey] = (fileKienTotals[fnKey] || 0) + 1;
+});
 
 const matLookup={};
 let matCount=0;
@@ -716,7 +719,7 @@ const isDoubleA4=paperSize==='A4x2';
 const kienPerPage=isDoubleA4?2:1;
 const pageStyle=isDoubleA4?
 `@page{size:A4 landscape;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial;background:#fff;margin:0;padding:0}
-.page{width:297mm;height:210mm;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0;page-break-after:always}
+.page{width:297mm;height:206mm;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0;page-break-after:always;background:#ffffff}
 .kien{border:1px solid #999;padding:5mm;overflow:hidden;display:flex;flex-direction:column;border-right:none}
 .kien:nth-child(2n){border-right:1px solid #999}
 .header-container{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #1A5276;padding-bottom:2px;margin-bottom:4px}
@@ -726,7 +729,7 @@ const pageStyle=isDoubleA4?
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:3px 0;font-size:7px}
 .meta-item{padding:2px;border:1px solid #BEC8D2;border-radius:2px;background:#ffffff;display:flex;flex-direction:column}
 .meta-label{color:#666;font-size:6px;font-weight:bold}.meta-value{font-size:8px;font-weight:bold;color:#1A73E8;margin-top:0px}
-table{width:100%;border-collapse:collapse;margin:4px 0;font-size:6px}th,td{border:1px solid #ddd;padding:1px;text-align:left}
+table{width:100%;border-collapse:collapse;margin:4px 0;font-size:6px}th,td{border:1px solid #ddd;padding:1px;text-align:left;line-height:1.3}
 th{background:#ffffff;color:#1A5276;font-weight:700;text-align:center;border-bottom:2px solid #1A5276;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 tbody tr{background:#ffffff}
 tbody tr td{border-bottom:1px solid #E8EDF2}
@@ -734,7 +737,7 @@ tbody tr td{border-bottom:1px solid #E8EDF2}
 .mat-legend{margin-top:4px;padding:3px 5px;border:1px dashed #BEC8D2;border-radius:2px;font-size:6px;font-family:'Segoe UI',Arial;color:#1A5276;font-weight:700;line-height:1.3}`
 :
 `@page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial;background:#fff}
-.page{width:210mm;height:297mm;padding:12mm;page-break-after:always;display:flex;flex-direction:column}
+.page{width:210mm;height:293mm;padding:12mm;page-break-after:always;display:flex;flex-direction:column;background:#ffffff}
 .kien{padding:0;flex:1;display:flex;flex-direction:column}
 .header-container{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1A5276;padding-bottom:6px;margin-bottom:10px}
 .header-title{font-size:18px;font-weight:bold;color:#1A5276;line-height:1.2}
@@ -743,7 +746,7 @@ tbody tr td{border-bottom:1px solid #E8EDF2}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;font-size:10px}
 .meta-item{padding:6px;border:1px solid #BEC8D2;border-radius:3px;background:#ffffff;display:flex;flex-direction:column}
 .meta-label{color:#666;font-size:9px;font-weight:bold}.meta-value{font-size:11px;font-weight:bold;color:#1A73E8;margin-top:1px}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:9px}th,td{border:1px solid #ddd;padding:5px;text-align:left}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:9px}th,td{border:1px solid #ddd;padding:5px;text-align:left;line-height:1.4}
 th{background:#ffffff;color:#1A5276;font-weight:700;text-align:center;border-bottom:2px solid #1A5276;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 tbody tr{background:#ffffff}
 tbody tr td{border-bottom:1px solid #E8EDF2}
@@ -759,92 +762,112 @@ const advColors=['#E8F4F8','#F0E8F8','#F8F0E8','#E8F8E8','#F8E8E8','#E8E8F8'];
 let advColorIdx=0;
 
 kiens.forEach((kien,kIdx)=>{
-let rows=[];
-for(const p of kien.parts){
-const area=(p.length&&p.width&&p.qty)?(p.length*p.width*p.qty/1e6).toFixed(3):'';
-const mass=(p.length&&p.width&&p.thickness&&p.qty)?(p.length*p.width*p.thickness*p.qty/1e9*700).toFixed(2):'';
-const matCode=getMaterialCode(p.material||'');
-if(materialMode==='abbr')matLegend[matCode]=p.material||'';
-rows.push({layer:parseInt(p.layer)||0,stt:p.stt||'',name:p.name,qty:p.qty||'',length:p.length||'',width:p.width||'',thickness:p.thickness||'',area,mass,material:matCode});
-}
-rows.sort((a,b)=>a.layer-b.layer);
-rows.forEach(r=>r.layer=String(r.layer));
+    const fnKey = kien.fileName || 'default';
+    if (fileKienIndices[fnKey] === undefined) {
+        fileKienIndices[fnKey] = 0;
+    }
+    const currentFileIdx = fileKienIndices[fnKey];
+    const currentFileTotal = fileKienTotals[fnKey];
+    fileKienIndices[fnKey]++;
 
-for(let i=0;i<rows.length;i+=rowsPerPage){
-const chunk=rows.slice(i,i+rowsPerPage);
-const partNum=Math.floor(i/rowsPerPage)+1;
-const totalParts=Math.ceil(rows.length/rowsPerPage);
+    let rows=[];
+    for(const p of kien.parts){
+        const area=(p.length&&p.width&&p.qty)?(p.length*p.width*p.qty/1e6).toFixed(3):'';
+        const mass=(p.length&&p.width&&p.thickness&&p.qty)?(p.length*p.width*p.thickness*p.qty/1e9*700).toFixed(2):'';
+        const matCode=getMaterialCode(p.material||'');
+        if(materialMode==='abbr')matLegend[matCode]=p.material||'';
+        rows.push({layer:parseInt(p.layer)||0,stt:p.stt||'',name:p.name,qty:p.qty||'',length:p.length||'',width:p.width||'',thickness:p.thickness||'',area,mass,material:matCode});
+    }
+    rows.sort((a,b)=>a.layer-b.layer);
+    rows.forEach(r=>r.layer=String(r.layer));
 
-pageKiens.push({kien,chunk,kIdx,kTotal:kiens.length,partNum,totalParts});
+    for(let i=0;i<rows.length;i+=rowsPerPage){
+        const chunk=rows.slice(i,i+rowsPerPage);
+        const partNum=Math.floor(i/rowsPerPage)+1;
+        const totalParts=Math.ceil(rows.length/rowsPerPage);
 
-if(pageKiens.length===kienPerPage || kIdx===kiens.length-1 && i+rowsPerPage>=rows.length){
-pageNum++;
-html+=`<div class="page">`;
-pageKiens.forEach((pk,pkIdx)=>{
-const bgColor=advColors[advColorIdx%advColors.length];
-const sanPhamList = [...new Set(pk.kien.parts.map(p => p.obj3d).filter(x => x && x.trim() !== ''))];
-const sanPham = sanPhamList.length > 0 ? sanPhamList.join(', ') : '—';
-const totalQty = pk.kien.parts.reduce((acc, curr) => acc + (curr.qty || 0), 0);
-const printDate = new Date().toLocaleDateString('vi-VN');
-const kienSize = pk.kien.size ? pk.kien.size.replace(/\s*мм.*/gi, '').replace(/\s*mm.*/gi, '').trim() : '—';
-const kienMass = pk.kien.mass ? pk.kien.mass.replace(/кг/gi, 'kg').replace(/kr/gi, 'kg').trim() : '—';
+        pageKiens.push({kien,chunk,kIdx:currentFileIdx,kTotal:currentFileTotal,partNum,totalParts});
 
-html+=`<div class="kien" style="background-color:${bgColor}">
-<div class="header-container">
-<div class="header-title">PHIẾU CHI TIẾT KIỆN HÀNG</div>
-<div class="header-kien">KIỆN: <span>${pk.kIdx+1}/${pk.kTotal}</span></div>
-</div>
-<div class="meta">
-<div class="meta-item"><div class="meta-label">Tên kiện</div><div class="meta-value">${pk.kien.name}</div></div>
-<div class="meta-item"><div class="meta-label">Đơn hàng</div><div class="meta-value">${pk.kien.order||'—'}</div></div>
-<div class="meta-item"><div class="meta-label">Kích thước (mm)</div><div class="meta-value">${kienSize}</div></div>
-<div class="meta-item"><div class="meta-label">Khối lượng (kg)</div><div class="meta-value">${kienMass}</div></div>
-<div class="meta-item"><div class="meta-label">Sản phẩm</div><div class="meta-value" title="${esc(sanPham)}">${sanPham}</div></div>
-<div class="meta-item"><div class="meta-label">Tổng số lượng chi tiết</div><div class="meta-value">${totalQty} tấm</div></div>
-</div>
-<table><thead><tr>
-<th style="width:5%">Layer</th><th style="width:5%">STT</th><th style="width:22%">Tên chi tiết</th>
-<th style="width:5%">SL</th><th style="width:8%">Dài</th><th style="width:8%">Rộng</th>
-<th style="width:8%">Dày</th><th style="width:10%">D.Tích</th><th style="width:10%">K.lượng</th>
-<th style="width:14%">Vật liệu</th></tr></thead><tbody>
-${pk.chunk.map(p=>`<tr><td style="text-align:center">${p.layer}</td><td style="text-align:center">${p.stt}</td>
-<td>${p.name}</td><td style="text-align:center">${p.qty}</td>
-<td style="text-align:center">${p.length}</td><td style="text-align:center">${p.width}</td>
-<td style="text-align:center">${p.thickness}</td><td style="text-align:center">${p.area}</td>
-<td style="text-align:center">${p.mass}</td><td>${p.material}</td></tr>`).join('')}
-</tbody></table>
-${materialMode==='abbr'?`<div class="mat-legend">
-${Object.entries(matLegend).map(([code,name])=>`${code}: ${name}`).join(' | ')}
-</div>`:''}
-<div class="footer">
-<span>Ngày in: ${printDate}</span>
-<span style="font-weight:500;font-size:${isDoubleA4?'6px':'9px'};">woodsoft.vn</span>
-<span>Trang ${pk.partNum}/${pk.totalParts}</span>
-</div>
-</div>`;
-advColorIdx++;
+        if(pageKiens.length===kienPerPage || kIdx===kiens.length-1 && i+rowsPerPage>=rows.length){
+            pageNum++;
+            html+=`<div class="page">`;
+            pageKiens.forEach((pk,pkIdx)=>{
+                const bgColor=advColors[advColorIdx%advColors.length];
+                const sanPhamList = [...new Set(pk.kien.parts.map(p => p.obj3d).filter(x => x && x.trim() !== ''))];
+                const sanPham = sanPhamList.length > 0 ? sanPhamList.join(', ') : '—';
+                const totalQty = pk.kien.parts.reduce((acc, curr) => acc + (curr.qty || 0), 0);
+                const printDate = new Date().toLocaleDateString('vi-VN');
+                const kienSize = pk.kien.size ? pk.kien.size.replace(/\s*мм.*/gi, '').replace(/\s*mm.*/gi, '').trim() : '—';
+                const kienMass = pk.kien.mass ? pk.kien.mass.replace(/кг/gi, 'kg').replace(/kr/gi, 'kg').trim() : '—';
+
+                html+=`<div class="kien" style="background-color:#ffffff">
+                <div class="header-container">
+                <div class="header-title">PHIẾU CHI TIẾT KIỆN HÀNG</div>
+                <div class="header-kien">KIỆN: <span>${pk.kIdx+1}/${pk.kTotal}</span></div>
+                </div>
+                <div class="meta">
+                <div class="meta-item"><div class="meta-label">Tên kiện</div><div class="meta-value">${pk.kien.name}</div></div>
+                <div class="meta-item"><div class="meta-label">Đơn hàng</div><div class="meta-value">${pk.kien.order||'—'}</div></div>
+                <div class="meta-item"><div class="meta-label">Kích thước (mm)</div><div class="meta-value">${kienSize}</div></div>
+                <div class="meta-item"><div class="meta-label">Khối lượng (kg)</div><div class="meta-value">${kienMass}</div></div>
+                <div class="meta-item"><div class="meta-label">Sản phẩm</div><div class="meta-value" title="${esc(sanPham)}">${sanPham}</div></div>
+                <div class="meta-item"><div class="meta-label">Tổng số lượng chi tiết</div><div class="meta-value">${totalQty} tấm</div></div>
+                </div>
+                <table><thead><tr>
+                <th style="width:5%">Layer</th><th style="width:5%">STT</th><th style="width:22%">Tên chi tiết</th>
+                <th style="width:5%">SL</th><th style="width:8%">Dài</th><th style="width:8%">Rộng</th>
+                <th style="width:8%">Dày</th><th style="width:10%">D.Tích</th><th style="width:10%">K.lượng</th>
+                <th style="width:14%">Vật liệu</th></tr></thead><tbody>
+                ${pk.chunk.map(p=>`<tr><td style="text-align:center">${p.layer}</td><td style="text-align:center">${p.stt}</td>
+                <td>${p.name}</td><td style="text-align:center">${p.qty}</td>
+                <td style="text-align:center">${p.length}</td><td style="text-align:center">${p.width}</td>
+                <td style="text-align:center">${p.thickness}</td><td style="text-align:center">${p.area}</td>
+                <td style="text-align:center">${p.mass}</td><td>${p.material}</td></tr>`).join('')}
+                </tbody></table>
+                ${materialMode==='abbr'?`<div class="mat-legend">
+                ${Object.entries(matLegend).map(([code,name])=>`${code}: ${name}`).join(' | ')}
+                </div>`:''}
+                <div class="footer">
+                <span>Ngày in: ${printDate}</span>
+                <span style="font-weight:500;font-size:${isDoubleA4?'6px':'9px'};">woodsoft.vn</span>
+                <span>Trang ${pk.partNum}/${pk.totalParts}</span>
+                </div>
+                </div>`;
+                advColorIdx++;
+            });
+            html+=`</div>`;
+            pageKiens=[];
+        }
+    }
 });
-html+=`</div>`;
-pageKiens=[];
-}
-}
-});
 
-html+=`</body></html>`;
+html+=`</div></body></html>`;
 
-advPrintDoc.write(html);
-advPrintDoc.close();
+const iframe = document.createElement('iframe');
+iframe.style.position = 'fixed';
+iframe.style.width = '0';
+iframe.style.height = '0';
+iframe.style.border = 'none';
+document.body.appendChild(iframe);
+
+const doc = iframe.contentDocument || iframe.contentWindow.document;
+doc.open();
+doc.write(html);
+doc.close();
 
 const now=new Date();
 const dateStr=`${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()}`;
 const timeStr=`${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
 const filename=`Packing_list_${dateStr}_${timeStr}`;
 
-setTimeout(()=>{
-advPrintWin.document.title=filename;
-advPrintWin.print();
-setTimeout(()=>advPrintWin.close(),500);
-},300);
+setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.document.title = ' ';
+    iframe.contentWindow.print();
+    setTimeout(() => {
+        iframe.remove();
+    }, 1000);
+}, 300);
 }
 
 function generateBatchPrintPDF(kiens,paperSize='A4'){

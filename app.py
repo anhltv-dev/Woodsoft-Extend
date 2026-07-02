@@ -28,6 +28,20 @@ except ImportError:
 
 from mode1.gui_mode1 import Mode1Window
 
+# ------------------------------------------------------------
+# Special mode: run the WebView2 Mode 1 selector inside the same
+# PyInstaller onefile executable.
+# ------------------------------------------------------------
+if "--mode1-webview" in sys.argv:
+    try:
+        from mode1 import run_webview
+        raise SystemExit(run_webview.main())
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"[MODE1_WEBVIEW] Failed to start: {e}")
+        raise SystemExit(1)
+
 print("RUNNING:", __file__)
 print("Python Executable:", sys.executable)
 print("Python Path:", sys.path)

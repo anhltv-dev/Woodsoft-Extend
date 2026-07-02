@@ -7,6 +7,9 @@ def main():
     dir_path = os.path.dirname(os.path.abspath(__file__))
     html_path = os.path.join(dir_path, "woodsoft tool packing list.html")
     
+    # Enable file downloads in webview
+    webview.settings['ALLOW_DOWNLOADS'] = True
+    
     # Check if file exists
     if not os.path.exists(html_path):
         print(f"Error: {html_path} not found")

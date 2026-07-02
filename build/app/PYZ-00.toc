@@ -1594,6 +1594,9 @@
   ('mode1.gui_mode1',
    'D:\\VA Projects\\Woodsoft Extend\\mode1\\gui_mode1.py',
    'PYMODULE'),
+  ('mode1.run_webview',
+   'D:\\VA Projects\\Woodsoft Extend\\mode1\\run_webview.py',
+   'PYMODULE'),
   ('more_itertools',
    'C:\\Users\\Bach '
    'Duong\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\more_itertools\\__init__.py',

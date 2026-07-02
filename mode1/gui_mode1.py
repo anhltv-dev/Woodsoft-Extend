@@ -16,14 +16,18 @@ class Mode1Window:
         self._launch_webview()
         
     def _launch_webview(self):
-        # Path to python script
         dir_path = os.path.dirname(os.path.abspath(__file__))
-        script_path = os.path.join(dir_path, "run_webview.py")
         
-        # Spawn subprocess
+        # Spawn subprocess (use command-line flag if frozen)
+        if getattr(sys, "frozen", False):
+            cmd = [sys.executable, "--mode1-webview"]
+        else:
+            script_path = os.path.join(dir_path, "run_webview.py")
+            cmd = [sys.executable, script_path]
+            
         try:
             self.process = subprocess.Popen(
-                [sys.executable, script_path],
+                cmd,
                 cwd=dir_path
             )
             # Start checking for completion
