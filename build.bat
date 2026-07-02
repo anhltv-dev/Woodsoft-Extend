@@ -73,6 +73,10 @@ echo.
 
 REM Step 3: Check critical files
 echo [3/4] Checking critical files...
+if exist "..\Woodsoft tool Packing list WL\woodsoft tool packing list.html" (
+    echo   - Syncing latest HTML file from workspace...
+    copy /y "..\Woodsoft tool Packing list WL\woodsoft tool packing list.html" "mode1\woodsoft tool packing list.html" >nul
+)
 if not exist "app.py" (
     echo   app.py not found!
     goto :error_exit
